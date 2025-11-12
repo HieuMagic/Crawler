@@ -4,11 +4,10 @@ import time
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Add parent directory to path for imports to work when running directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.config import CONFIG
-from src.utils import generate_paper_ids, get_directory_size, load_json, save_json
+from src.utils import generate_paper_ids, get_directory_size, load_json, save_json, get_file_sizes_by_type
 from src.monitor import ResourceMonitor
 from src.statistics import Statistics
 from src.scraper import ArxivScraper
@@ -19,17 +18,14 @@ def setup_logging():
     log_format = '[%(asctime)s] %(levelname)s: %(message)s'
     date_format = '%Y-%m-%d %H:%M:%S'
     
-    # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(logging.Formatter(log_format, date_format))
     
-    # File handler
     file_handler = logging.FileHandler('scraper.log', encoding='utf-8')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(logging.Formatter(log_format, date_format))
     
-    # Root logger
     logging.basicConfig(
         level=logging.DEBUG,
         handlers=[console_handler, file_handler]
@@ -39,9 +35,7 @@ def setup_logging():
 def load_progress():
     """Load progress from file"""
     progress = load_json(CONFIG['progress_file'])
-    if progress:
-        return set(progress.get('processed', []))
-    return set()
+    return set(progress.get('processed', [])) if progress else set()
 
 
 def save_progress(processed_papers):
@@ -60,20 +54,19 @@ def process_single_paper(paper_id, scraper, stats, processed_papers):
                 size_before=result['size_before'],
                 size_after=result['size_after'],
                 references_count=result['references'],
-                processing_time=result['time'],
-                peak_disk=result['peak_disk']
+                processing_time=result['time']
             )
             processed_papers.add(paper_id)
             save_progress(processed_papers)
             return True, None
         else:
-            error_type = result.get('error', 'network_error')
+            error_type = result.get('error', 'download_timeout')
             stats.add_failed_paper(error_type)
             return False, error_type
             
     except Exception as e:
         logging.error(f"Unexpected error processing {paper_id}: {e}")
-        stats.add_failed_paper('network_error')
+        stats.add_failed_paper('download_timeout')
         return False, str(e)
 
 
@@ -84,11 +77,9 @@ def main():
     print("=" * 70)
     print()
     
-    # Setup logging
     setup_logging()
     logging.info("Starting scraper")
     
-    # Generate paper IDs
     print(f"Generating paper IDs from {CONFIG['start_id']} to {CONFIG['end_id']}...")
     entry_discovery_start = time.time()
     paper_ids = generate_paper_ids(CONFIG['start_id'], CONFIG['end_id'])
@@ -98,14 +89,10 @@ def main():
     print(f"Total papers to process: {total_papers}")
     print()
     
-    # Load progress
-    processed_papers = set()
-    if CONFIG['resume']:
-        processed_papers = load_progress()
-        if processed_papers:
-            print(f"Resuming: {len(processed_papers)} papers already processed")
+    processed_papers = load_progress() if CONFIG['resume'] else set()
+    if processed_papers:
+        print(f"Resuming: {len(processed_papers)} papers already processed")
     
-    # Filter out already processed
     remaining_papers = [pid for pid in paper_ids if pid not in processed_papers]
     print(f"Papers to process: {len(remaining_papers)}")
     print()
@@ -114,7 +101,6 @@ def main():
         print("All papers already processed!")
         return
     
-    # Initialize components
     stats = Statistics()
     stats.set_total_papers(total_papers)
     
@@ -123,7 +109,6 @@ def main():
     
     scraper = ArxivScraper(CONFIG)
     
-    # Start processing
     start_time = time.time()
     num_workers = CONFIG['num_workers']
     
@@ -133,13 +118,11 @@ def main():
     
     try:
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
-            # Submit all tasks
             future_to_paper = {
                 executor.submit(process_single_paper, paper_id, scraper, stats, processed_papers): paper_id
                 for paper_id in remaining_papers
             }
             
-            # Process as they complete
             completed = len(processed_papers)
             for future in as_completed(future_to_paper):
                 paper_id = future_to_paper[future]
@@ -155,7 +138,7 @@ def main():
                         
                 except Exception as e:
                     print(f"[{completed}/{total_papers}] ERROR: {paper_id} - {e}")
-                    stats.add_failed_paper('network_error')
+                    stats.add_failed_paper('download_timeout')
     
     except KeyboardInterrupt:
         print()
@@ -163,36 +146,33 @@ def main():
         logging.info("Scraping interrupted by user")
     
     finally:
-        # Stop monitoring
         monitor.stop()
         
-        # Calculate final statistics
         total_runtime = time.time() - start_time
         resource_stats = monitor.get_stats()
         
-        # Get disk usage
         output_dir = os.path.join(CONFIG['output_dir'], CONFIG['student_id'])
         if os.path.exists(output_dir):
             output_size_bytes = get_directory_size(output_dir)
             output_size_mb = output_size_bytes / (1024 * 1024)
+            tex_mb, bib_mb, json_mb = get_file_sizes_by_type(output_dir)
         else:
             output_size_mb = 0
+            tex_mb = bib_mb = json_mb = 0
         
-        # Set final statistics
         stats.set_timing(total_runtime, entry_discovery_time)
         stats.set_resources(
             max_ram=resource_stats['max_ram_mb'],
             avg_ram=resource_stats['avg_ram_mb'],
             max_cpu=resource_stats['max_cpu_percent'],
             avg_cpu=resource_stats['avg_cpu_percent'],
-            disk_usage=0,  # Will be calculated from paper peaks
-            output_size=output_size_mb  # Final output size
+            disk_usage=resource_stats['max_disk_mb'],
+            output_size=output_size_mb
         )
+        stats.set_file_percentages(tex_mb, bib_mb, json_mb)
         
-        # Save statistics
         stats.save(CONFIG['stats_file'])
         
-        # Print summary
         print()
         print("=" * 70)
         print("SUMMARY")

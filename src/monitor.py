@@ -54,10 +54,33 @@ class ResourceMonitor:
             time.sleep(5)  # Sample every 5 seconds
     
     def stop(self):
-        """Stop monitoring"""
+        """Stop monitoring and take final measurements"""
         self.running = False
         if self.thread:
             self.thread.join(timeout=2)
+        
+        # Take one final sample to capture the true final state
+        try:
+            # Final RAM and CPU
+            ram_mb = self.process.memory_info().rss / (1024 * 1024)
+            cpu_percent = self.process.cpu_percent(interval=0.1)
+            self.ram_samples.append(ram_mb)
+            self.cpu_samples.append(cpu_percent)
+            
+            # Final disk usage
+            if os.path.exists(self.output_dir):
+                total_size = 0
+                for dirpath, dirnames, filenames in os.walk(self.output_dir):
+                    for filename in filenames:
+                        filepath = os.path.join(dirpath, filename)
+                        try:
+                            total_size += os.path.getsize(filepath)
+                        except (OSError, FileNotFoundError):
+                            pass
+                disk_mb = total_size / (1024 * 1024)
+                self.disk_samples.append(disk_mb)
+        except Exception:
+            pass
     
     def get_stats(self):
         """Get monitoring statistics"""
