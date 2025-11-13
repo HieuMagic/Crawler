@@ -41,10 +41,17 @@ class ArxivScraper:
         self.config = config
         self.client = arxiv.Client()
         
+        # Get API key and set up rate limiter and headers
         api_key = config.get('ss_api_key')
-        wait_time = 0.15 if api_key else 1.5
+        # API key can be None, empty string, or a valid key
+        has_api_key = api_key and api_key.strip()
+        
+        # With API key: 1s between calls, without: 3s to be respectful
+        wait_time = 1 if has_api_key else 3
         self.ss_limiter = RateLimiter(wait_time)
-        self.ss_headers = {'x-api-key': api_key} if api_key else {}
+        
+        # Only add x-api-key header if we have a valid key
+        self.ss_headers = {'x-api-key': api_key} if has_api_key else {}
     
     def process_paper(self, paper_id):
         """Process a single paper, returns dict with results"""
@@ -309,7 +316,9 @@ class ArxivScraper:
                 return references, venue, 'success'
                 
             elif response.status_code == 429:
-                wait_time = 30 * (attempt + 1)
+                # Progressive wait times: 5s, 10s, 20s
+                wait_times = [5, 10, 20]
+                wait_time = wait_times[min(attempt, len(wait_times) - 1)]
                 logging.warning(f"  [{paper_id}] Semantic Scholar rate limit (429), waiting {wait_time}s (attempt {attempt + 1}/{max_retries})")
                 time.sleep(wait_time)
                 if attempt == max_retries - 1:

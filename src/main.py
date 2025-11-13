@@ -11,7 +11,7 @@ from src.utils import generate_paper_ids, get_directory_size, load_json, save_js
 from src.monitor import ResourceMonitor
 from src.statistics import Statistics
 from src.scraper import ArxivScraper
-
+from src.visualizer import create_resource_graphs
 
 def setup_logging():
     """Setup logging configuration"""
@@ -167,11 +167,24 @@ def main():
             max_cpu=resource_stats['max_cpu_percent'],
             avg_cpu=resource_stats['avg_cpu_percent'],
             disk_usage=resource_stats['max_disk_mb'],
-            output_size=output_size_mb
+            output_size=output_size_mb,
+            resource_history={
+                'timestamps': resource_stats['timestamps'],
+                'ram_usage_mb': resource_stats['ram_usage_mb'],
+                'cpu_percent': resource_stats['cpu_percent'],
+                'disk_usage_mb': resource_stats['disk_usage_mb']
+            }
         )
         stats.set_file_percentages(tex_mb, bib_mb, json_mb)
         
         stats.save(CONFIG['stats_file'])
+        
+        # Generate resource usage graphs
+        try:
+            graph_files = create_resource_graphs(stats.get_stats())
+            print(f"Generated resource graphs: {', '.join(graph_files)}")
+        except Exception as e:
+            logging.error(f"Failed to generate resource graphs: {e}")
         
         print()
         print("=" * 70)

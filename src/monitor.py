@@ -13,6 +13,7 @@ class ResourceMonitor:
         self.ram_samples = []
         self.cpu_samples = []
         self.disk_samples = []
+        self.timestamps = []
         self.running = False
         self.thread = None
     
@@ -26,6 +27,9 @@ class ResourceMonitor:
         """Background monitoring loop"""
         while self.running:
             try:
+                # Timestamp
+                self.timestamps.append(time.time())
+                
                 # RAM and CPU
                 ram_mb = self.process.memory_info().rss / (1024 * 1024)
                 cpu_percent = self.process.cpu_percent(interval=1)
@@ -61,6 +65,9 @@ class ResourceMonitor:
         
         # Take one final sample to capture the true final state
         try:
+            # Final timestamp
+            self.timestamps.append(time.time())
+            
             # Final RAM and CPU
             ram_mb = self.process.memory_info().rss / (1024 * 1024)
             cpu_percent = self.process.cpu_percent(interval=0.1)
@@ -90,7 +97,11 @@ class ResourceMonitor:
                 'avg_ram_mb': 0.0,
                 'max_cpu_percent': 0.0,
                 'avg_cpu_percent': 0.0,
-                'max_disk_mb': 0.0
+                'max_disk_mb': 0.0,
+                'timestamps': [],
+                'ram_usage_mb': [],
+                'cpu_percent': [],
+                'disk_usage_mb': []
             }
         
         return {
@@ -98,5 +109,9 @@ class ResourceMonitor:
             'avg_ram_mb': sum(self.ram_samples) / len(self.ram_samples),
             'max_cpu_percent': max(self.cpu_samples) if self.cpu_samples else 0.0,
             'avg_cpu_percent': sum(self.cpu_samples) / len(self.cpu_samples) if self.cpu_samples else 0.0,
-            'max_disk_mb': max(self.disk_samples) if self.disk_samples else 0.0
+            'max_disk_mb': max(self.disk_samples) if self.disk_samples else 0.0,
+            'timestamps': self.timestamps,
+            'ram_usage_mb': self.ram_samples,
+            'cpu_percent': self.cpu_samples,
+            'disk_usage_mb': self.disk_samples
         }

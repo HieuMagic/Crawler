@@ -82,14 +82,18 @@ class Statistics:
         self.stats['total_runtime_seconds'] = round(total_runtime, 3)
         self.stats['entry_discovery_time_seconds'] = round(entry_discovery_time, 3)
 
-    def set_resources(self, max_ram, avg_ram, max_cpu, avg_cpu, disk_usage, output_size):
-        """Set resource usage"""
+    def set_resources(self, max_ram, avg_ram, max_cpu, avg_cpu, disk_usage, output_size, resource_history=None):
+        """Set resource usage and history"""
         self.stats['max_ram_mb'] = round(max_ram, 3)
         self.stats['avg_ram_mb'] = round(avg_ram, 3)
         self.stats['max_cpu_percent'] = round(max_cpu, 3)
         self.stats['avg_cpu_percent'] = round(avg_cpu, 3)
         self.stats['max_disk_usage_mb'] = round(disk_usage, 3)
         self.stats['final_output_size_mb'] = round(output_size, 3)
+        
+        # Save resource history for graphing
+        if resource_history:
+            self.stats['resource_history'] = resource_history
     
     def set_file_percentages(self, tex_mb, bib_mb, json_mb):
         """Set file type percentages based on disk usage"""

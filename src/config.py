@@ -8,7 +8,7 @@ CONFIG = {
     'end_id': '2311.05232',
     'student_id': '23120258',
     
-    'output_dir': './data2',
+    'output_dir': './data',
     'stats_file': './statistics.json',
     'progress_file': './progress.json',
     
