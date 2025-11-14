@@ -50,11 +50,13 @@ def process_single_paper(paper_id, scraper, stats, processed_papers):
         
         if result.get('success'):
             stats.add_successful_paper(
+                paper_id=paper_id,
                 versions_count=result['versions'],
                 size_before=result['size_before'],
                 size_after=result['size_after'],
                 references_count=result['references'],
-                processing_time=result['time']
+                processing_time=result['time'],
+                api_time=result.get('api_time', 0.0)
             )
             processed_papers.add(paper_id)
             save_progress(processed_papers)
@@ -81,9 +83,7 @@ def main():
     logging.info("Starting scraper")
     
     print(f"Generating paper IDs from {CONFIG['start_id']} to {CONFIG['end_id']}...")
-    entry_discovery_start = time.time()
     paper_ids = generate_paper_ids(CONFIG['start_id'], CONFIG['end_id'])
-    entry_discovery_time = time.time() - entry_discovery_start
     
     total_papers = len(paper_ids)
     print(f"Total papers to process: {total_papers}")
@@ -132,12 +132,18 @@ def main():
                     success, error = future.result()
                     
                     if success:
-                        print(f"[{completed}/{total_papers}] SUCCESS: {paper_id}")
+                        msg = f"[{completed}/{total_papers}] SUCCESS: {paper_id}"
+                        print(msg)
+                        logging.info(msg)
                     else:
-                        print(f"[{completed}/{total_papers}] FAILED: {paper_id} ({error})")
+                        msg = f"[{completed}/{total_papers}] FAILED: {paper_id} ({error})"
+                        print(msg)
+                        logging.warning(msg)
                         
                 except Exception as e:
-                    print(f"[{completed}/{total_papers}] ERROR: {paper_id} - {e}")
+                    msg = f"[{completed}/{total_papers}] ERROR: {paper_id} - {e}"
+                    print(msg)
+                    logging.error(msg)
                     stats.add_failed_paper('download_timeout')
     
     except KeyboardInterrupt:
@@ -160,6 +166,8 @@ def main():
             output_size_mb = 0
             tex_mb = bib_mb = json_mb = 0
         
+        # Calculate total entry discovery time from sum of API times
+        entry_discovery_time = sum(stats.paper_api_times) if stats.paper_api_times else 0.0
         stats.set_timing(total_runtime, entry_discovery_time)
         stats.set_resources(
             max_ram=resource_stats['max_ram_mb'],

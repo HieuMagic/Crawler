@@ -58,12 +58,13 @@ class ArxivScraper:
         start_time = time.time()
         folder_name = arxiv_id_to_folder_name(paper_id)
         
-        logging.info(f"Processing paper {paper_id}")
-        
         try:
+            # Time the arXiv API call (entry discovery)
+            api_start = time.time()
             paper = self._get_paper_metadata(paper_id)
+            api_time = time.time() - api_start
+            
             if not paper:
-                logging.error(f"Failed to get metadata for {paper_id}")
                 return {'error': 'download_timeout'}
             
             entry_id = paper.entry_id
@@ -74,7 +75,6 @@ class ArxivScraper:
             
             versions = list(range(1, latest_version + 1))
             total_versions = len(versions)
-            logging.info(f"  Found {total_versions} version(s)")
             
             version_dates = self._get_version_dates(paper_id, total_versions)
             if not version_dates:
@@ -98,7 +98,6 @@ class ArxivScraper:
             for idx, version_num in enumerate(versions):
                 version_id = f"{paper_id}v{version_num}"
                 version_date = version_dates[idx] if idx < len(version_dates) else datetime.now().strftime('%Y-%m-%d')
-                logging.info(f"  [{paper_id}] Downloading version v{version_num}")
                 
                 try:
                     size_b, size_a, v_date = self._download_and_extract_version(
@@ -140,7 +139,8 @@ class ArxivScraper:
                 'size_before': size_before,
                 'size_after': size_after,
                 'references': arxiv_ref_count,
-                'time': processing_time
+                'time': processing_time,
+                'api_time': api_time
             }
             
         except requests.exceptions.Timeout:
@@ -277,9 +277,6 @@ class ArxivScraper:
         
         metadata_path = os.path.join(paper_dir, 'metadata.json')
         save_json(metadata, metadata_path)
-        
-        paper_id = paper_dir.split('/')[-1].replace('-', '.')
-        logging.info(f"  [{paper_id}] Saved metadata")
     
     def _get_references(self, paper_id):
         """Get references and publication venue from Semantic Scholar"""
@@ -310,9 +307,6 @@ class ArxivScraper:
                 data = response.json()
                 references = data.get('references', [])
                 venue = data.get('venue', '')
-                logging.info(f"  [{paper_id}] Found {len(references)} references")
-                if venue:
-                    logging.info(f"  [{paper_id}] Publication venue: {venue}")
                 return references, venue, 'success'
                 
             elif response.status_code == 429:
@@ -327,7 +321,6 @@ class ArxivScraper:
                 continue
                 
             elif response.status_code == 404:
-                logging.info(f"  [{paper_id}] Paper not found in Semantic Scholar")
                 return [], '', 'success'
                 
             else:
@@ -361,8 +354,5 @@ class ArxivScraper:
         
         references_path = os.path.join(paper_dir, 'references.json')
         save_json(ref_dict, references_path)
-        
-        paper_id = paper_dir.split('/')[-1].replace('-', '.')
-        logging.info(f"  [{paper_id}] Saved {len(ref_dict)} references with arXiv IDs")
         
         return len(ref_dict)

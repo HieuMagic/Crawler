@@ -49,9 +49,13 @@ class Statistics:
         self.paper_versions = []
         self.paper_references = []
         self.papers_with_references = 0
+        self.paper_api_times = []
+        
+        # Store per-paper data for detailed output
+        self.per_paper_data = []
     
-    def add_successful_paper(self, versions_count, size_before, size_after, 
-                           references_count, processing_time):
+    def add_successful_paper(self, paper_id, versions_count, size_before, size_after, 
+                           references_count, processing_time, api_time=0.0):
         """Record successful paper"""
         self.stats['successful_papers'] += 1
         self.stats['total_versions_scraped'] += versions_count
@@ -61,6 +65,18 @@ class Statistics:
         self.paper_sizes_after.append(size_after)
         self.paper_versions.append(versions_count)
         self.paper_references.append(references_count)
+        self.paper_api_times.append(api_time)
+        
+        # Store detailed per-paper data
+        self.per_paper_data.append({
+            'paper_id': paper_id,
+            'processing_time_seconds': round(processing_time, 3),
+            'entry_discovery_time_seconds': round(api_time, 3),
+            'size_before_bytes': size_before,
+            'size_after_bytes': size_after,
+            'versions': versions_count,
+            'references': references_count
+        })
         
         self.stats['total_references_scraped'] += references_count
         
@@ -122,6 +138,14 @@ class Statistics:
             self.stats['avg_paper_size_before_bytes'] = int(sum(self.paper_sizes_before) / successful)
             self.stats['avg_paper_size_after_bytes'] = int(sum(self.paper_sizes_after) / successful)
             self.stats['reference_success_rate_percent'] = round((self.papers_with_references / successful) * 100, 3)
+            
+            # Calculate average API time
+            if self.paper_api_times:
+                avg_api_time = sum(self.paper_api_times) / len(self.paper_api_times)
+                self.stats['avg_entry_discovery_time_seconds'] = round(avg_api_time, 3)
+        
+        # Include detailed per-paper data
+        self.stats['per_paper_data'] = self.per_paper_data
     
     def save(self, filepath):
         """Save statistics to file"""
