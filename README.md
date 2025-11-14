@@ -12,7 +12,7 @@ A Python tool for scraping arXiv papers with LaTeX source files and reference in
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/HieuMagic/Crawler.git
 cd Crawler
 ```
 
@@ -20,6 +20,7 @@ cd Crawler
 
 Using pip:
 ```bash
+cd src/
 pip install -r requirements.txt
 ```
 
@@ -27,6 +28,7 @@ Using conda:
 ```bash
 conda create -n arxiv-scraper python=3.8
 conda activate arxiv-scraper
+cd src/
 pip install -r requirements.txt
 ```
 
@@ -104,13 +106,19 @@ After completion, check `statistics.json` for:
 
 ### Visualization Graphs
 
-The scraper automatically generates **5 visualization graphs** (PNG format):
+The scraper automatically generates **11 visualization graphs** (PNG format):
 
 1. **`resource_ram.png`** - RAM usage over time (line graph)
 2. **`resource_cpu.png`** - CPU usage over time (line graph)
 3. **`resource_disk.png`** - Disk usage over time (line graph)
 4. **`resource_errors.png`** - Error breakdown by type (pie chart)
 5. **`resource_filetypes.png`** - File type distribution for .tex, .bib, .json (pie chart)
+6. **`resource_sizes_before.png`** - Paper size before extraction per paper (bar chart)
+7. **`resource_sizes_after.png`** - Paper size after extraction per paper (bar chart)
+8. **`resource_entry_times.png`** - Entry discovery time per paper (bar chart)
+9. **`resource_process_times.png`** - Total processing time per paper (bar chart)
+10. **`resource_references.png`** - Number of references per paper (bar chart)  
+
 
 ## Google Colab
 

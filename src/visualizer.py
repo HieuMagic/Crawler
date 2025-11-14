@@ -157,18 +157,15 @@ def create_resource_graphs(stats, output_prefix='resource'):
         versions = [p['versions'] for p in per_paper_data]
         references = [p['references'] for p in per_paper_data]
         
-        # 6. Size Before/After Extraction per Paper
+        # 6. Size Before Extraction per Paper
         plt.figure(figsize=(14, 6))
         x = np.arange(len(paper_ids))
-        width = 0.35
         
-        plt.bar(x - width/2, sizes_before, width, label='Before Extraction', color='#ff7f0e', alpha=0.8)
-        plt.bar(x + width/2, sizes_after, width, label='After Extraction', color='#2ca02c', alpha=0.8)
+        plt.bar(x, sizes_before, color='#ff7f0e', alpha=0.8)
         
         plt.xlabel('Paper Index', fontsize=12)
         plt.ylabel('Size (MB)', fontsize=12)
-        plt.title('Paper Size Before and After Extraction', fontsize=14, fontweight='bold', pad=20)
-        plt.legend(fontsize=10)
+        plt.title('Paper Size Before Extraction', fontsize=14, fontweight='bold', pad=20)
         plt.grid(True, alpha=0.3, axis='y')
         
         # Only show some x-axis labels to avoid overlap
@@ -177,12 +174,32 @@ def create_resource_graphs(stats, output_prefix='resource'):
                    rotation=45, ha='right', fontsize=9)
         
         plt.tight_layout()
-        size_file = os.path.join(charts_dir, f'{output_prefix}_sizes.png')
-        plt.savefig(size_file, dpi=300, bbox_inches='tight')
+        size_before_file = os.path.join(charts_dir, f'{output_prefix}_sizes_before.png')
+        plt.savefig(size_before_file, dpi=300, bbox_inches='tight')
         plt.close()
-        created_files.append(size_file)
+        created_files.append(size_before_file)
         
-        # 7. Entry Discovery Time per Paper
+        # 7. Size After Extraction per Paper
+        plt.figure(figsize=(14, 6))
+        
+        plt.bar(x, sizes_after, color='#2ca02c', alpha=0.8)
+        
+        plt.xlabel('Paper Index', fontsize=12)
+        plt.ylabel('Size (MB)', fontsize=12)
+        plt.title('Paper Size After Extraction', fontsize=14, fontweight='bold', pad=20)
+        plt.grid(True, alpha=0.3, axis='y')
+        
+        # Only show some x-axis labels to avoid overlap
+        plt.xticks(x[::step], [paper_ids[i].split('.')[-1] for i in range(0, len(paper_ids), step)], 
+                   rotation=45, ha='right', fontsize=9)
+        
+        plt.tight_layout()
+        size_after_file = os.path.join(charts_dir, f'{output_prefix}_sizes_after.png')
+        plt.savefig(size_after_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        created_files.append(size_after_file)
+        
+        # 8. Entry Discovery Time per Paper
         plt.figure(figsize=(14, 6))
         plt.bar(x, entry_times, color='#1f77b4', alpha=0.7)
         plt.xlabel('Paper Index', fontsize=12)
@@ -205,7 +222,7 @@ def create_resource_graphs(stats, output_prefix='resource'):
         plt.close()
         created_files.append(entry_file)
         
-        # 8. Processing Time per Paper
+        # 9. Processing Time per Paper
         plt.figure(figsize=(14, 6))
         plt.bar(x, processing_times, color='#d62728', alpha=0.7)
         plt.xlabel('Paper Index', fontsize=12)
@@ -228,7 +245,7 @@ def create_resource_graphs(stats, output_prefix='resource'):
         plt.close()
         created_files.append(process_file)
         
-        # 9. References per Paper
+        # 10. References per Paper
         plt.figure(figsize=(14, 6))
         plt.bar(x, references, color='#8c564b', alpha=0.7)
         plt.xlabel('Paper Index', fontsize=12)
