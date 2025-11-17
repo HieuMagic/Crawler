@@ -106,18 +106,18 @@ After completion, check `statistics.json` for:
 
 ### Visualization Graphs
 
-The scraper automatically generates **11 visualization graphs** (PNG format):
+The scraper automatically generates **10 visualization graphs** (PNG format):
 
-1. **`resource_ram.png`** - RAM usage over time (line graph)
-2. **`resource_cpu.png`** - CPU usage over time (line graph)
-3. **`resource_disk.png`** - Disk usage over time (line graph)
-4. **`resource_errors.png`** - Error breakdown by type (pie chart)
-5. **`resource_filetypes.png`** - File type distribution for .tex, .bib, .json (pie chart)
-6. **`resource_sizes_before.png`** - Paper size before extraction per paper (bar chart)
-7. **`resource_sizes_after.png`** - Paper size after extraction per paper (bar chart)
-8. **`resource_entry_times.png`** - Entry discovery time per paper (bar chart)
-9. **`resource_process_times.png`** - Total processing time per paper (bar chart)
-10. **`resource_references.png`** - Number of references per paper (bar chart)  
+1. **`resource_cpu.png`** - CPU usage over time
+2. **`resource_ram.png`** - RAM usage over time
+3. **`resource_disk.png`** - Disk usage over time
+4. **`resource_scraping_speed.png`** - Scraping progress (cumulative papers over time)
+5. **`resource_paper_sizes.png`** - Paper size comparison (before vs after extraction)
+6. **`resource_references.png`** - Distribution of references per paper
+7. **`resource_filetypes.png`** - File type distribution for .tex, .bib, and .json files
+8. **`resource_errors.png`** - Error type breakdown (pie chart)
+9. **`resource_entry_times.png`** - Entry discovery time per paper (arXiv API call times)
+10. **`resource_process_times.png`** - Total processing time per paper (histogram/boxplot)
 
 
 ## Google Colab
@@ -139,7 +139,3 @@ To run in Google Colab, use the provided notebook:
 - `src/config.py` - Configuration settings
 - `requirements.txt` - Python dependencies
 - `ArXiv_Scraper_Colab.ipynb` - Google Colab notebook
-
-## License
-
-This project is for educational purposes.

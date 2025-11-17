@@ -71,6 +71,7 @@ class Statistics:
         if success_time is None:
             success_time = time.time()
         self.paper_success_timestamps.append(success_time)
+        self.paper_api_times.append(api_time)
         
         # Store detailed per-paper data
         self.per_paper_data.append({

@@ -12,7 +12,7 @@ CONFIG = {
     'stats_file': './statistics.json',
     'progress_file': './progress.json',
     
-    'num_workers': 1,
+    'num_workers': 5,
     
     'ss_api_key': os.getenv('SEMANTIC_SCHOLAR_API_KEY'),
     
