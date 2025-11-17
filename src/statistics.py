@@ -1,3 +1,5 @@
+import time
+
 from src.utils import save_json
 
 
@@ -50,12 +52,13 @@ class Statistics:
         self.paper_references = []
         self.papers_with_references = 0
         self.paper_api_times = []
+        self.paper_success_timestamps = []
         
         # Store per-paper data for detailed output
         self.per_paper_data = []
     
-    def add_successful_paper(self, paper_id, versions_count, size_before, size_after, 
-                           references_count, processing_time, api_time=0.0):
+    def add_successful_paper(self, paper_id, versions_count, size_before, size_after,
+                           references_count, processing_time, api_time=0.0, success_time=None):
         """Record successful paper"""
         self.stats['successful_papers'] += 1
         self.stats['total_versions_scraped'] += versions_count
@@ -65,7 +68,9 @@ class Statistics:
         self.paper_sizes_after.append(size_after)
         self.paper_versions.append(versions_count)
         self.paper_references.append(references_count)
-        self.paper_api_times.append(api_time)
+        if success_time is None:
+            success_time = time.time()
+        self.paper_success_timestamps.append(success_time)
         
         # Store detailed per-paper data
         self.per_paper_data.append({
@@ -75,7 +80,8 @@ class Statistics:
             'size_before_bytes': size_before,
             'size_after_bytes': size_after,
             'versions': versions_count,
-            'references': references_count
+            'references': references_count,
+            'success_timestamp': round(success_time, 3)
         })
         
         self.stats['total_references_scraped'] += references_count

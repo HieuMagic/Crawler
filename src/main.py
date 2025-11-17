@@ -56,7 +56,8 @@ def process_single_paper(paper_id, scraper, stats, processed_papers):
                 size_after=result['size_after'],
                 references_count=result['references'],
                 processing_time=result['time'],
-                api_time=result.get('api_time', 0.0)
+                api_time=result.get('api_time', 0.0),
+                success_time=time.time()
             )
             processed_papers.add(paper_id)
             save_progress(processed_papers)
